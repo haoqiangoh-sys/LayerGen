@@ -2,12 +2,10 @@
 """
 LayerGen
 
-A single-file, plain GUI for building configurable chained AI layers.
+A lightweight tool for prompt engineering and model stacking.
 
 Run with:
     python LayerGen.py
-
-This file uses only Python's standard library.
 """
 
 import json

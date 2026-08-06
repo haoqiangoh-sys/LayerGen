@@ -1,46 +1,91 @@
 # LayerGen
 
-LayerGen is a simple desktop app for building chained AI workflows. You create blank layers, give each layer its own prompt and settings, then run the layers in order so one layer can feed into another.
+LayerGen is a small desktop app for building chained AI workflows.
 
-It is designed for coding workflows, but the layers can be used for any text-generation pipeline.
+Instead of using one large prompt, you create separate layers. Each layer can have its own prompt, model, API key, temperature, language, attachments, and output. A layer can use the project input, the previous layer's output, or the output from any specific layer.
+
+LayerGen was originally designed for code generation, but it can be used for any workflow where one AI step should feed another.
 
 ## Quick Start
 
-Run the app with Python:
-
-```cmd
-python LayerGen.py
-```
-
-If you are already in the `outputs` folder:
+Open Command Prompt and run:
 
 ```cmd
 cd C:\Users\haoqi\Documents\Codex\2026-08-03\thi\outputs
 python LayerGen.py
 ```
 
-LayerGen uses only Python's standard library. No extra Python packages are required for the GUI itself.
+LayerGen is a single Python file and uses Python's standard library. You do not need to install extra packages for the GUI.
+
+The main file is:
+
+```text
+LayerGen.py
+```
+
+The folder also contains older compatibility copies:
+
+```text
+code_generator_app.py
+three_layer_code_generator_gui.py
+```
+
+They are kept synced with `LayerGen.py`.
+
+## What LayerGen Does
+
+LayerGen lets you:
+
+- Create blank layers like browser tabs.
+- Give each layer its own prompt and settings.
+- Chain layers together with insertable variables.
+- Run every layer, or start from one layer and run only that layer plus everything after it.
+- Chat with one layer to fine-tune that layer and downstream layers.
+- Save and load full projects.
+- Attach text, code, images, PDFs, and URLs.
+- View a flowchart of how layers depend on each other.
+- Save generated code directly to a file.
 
 ## Basic Workflow
 
 1. Click `New layer`.
-2. Pick a `Provider`.
-3. Choose or enter a model.
-4. Write the layer prompt.
-5. Add more layers as needed.
-6. Use `Run all` or `Run selected + after`.
+2. Choose a provider.
+3. Add or load an API key if the provider needs one.
+4. Choose a model.
+5. Write the layer prompt.
+6. Add more layers.
+7. Use `Run all` or `Run selected + after`.
 
-Each layer has its own prompt, provider, model, temperature, max tokens, API key behavior, language, and output box.
+Each layer has a `Settings` menu and a `Models` menu.
 
-## Chaining Layers
+## Layers
 
-Use the `Insert variable` button in a layer prompt to insert values without typing curly braces manually.
+Each layer stores:
 
-Useful variables:
+- Layer name
+- Provider
+- Model
+- API key behavior
+- Endpoint/base URL
+- Temperature
+- Max tokens
+- Language
+- Prompt
+- Attachments
+- Output
+
+Layers are independent, but they can reference each other through variables.
+
+## Variables
+
+Use the `Insert` control in a layer prompt to insert variables without typing braces manually.
+
+Common variables:
 
 ```text
 {input}
 {language}
+{layer_name}
 {previous_output}
 {all_previous_outputs}
 {current_output}
@@ -53,18 +98,47 @@ Useful variables:
 Example:
 
 ```text
-Turn this plan into clean Python code.
+Write clean Python code from this plan:
 
-Plan:
 {previous_output}
 ```
 
-To feed Layer 1 directly into Layer 3, use:
+Example using a specific earlier layer:
 
 ```text
-Use this source from Layer 1:
+Use the architecture from Layer 1:
+
 {layer_1_output}
+
+Now write the final implementation.
 ```
+
+## Running Layers
+
+`Run all` starts at the first layer and runs the full workflow.
+
+`Run selected + after` starts at the selected layer and runs only that layer plus the layers after it.
+
+This is useful when you already like the earlier layers and only want to regenerate the later steps.
+
+## Chat
+
+The `Chat` tab is for fine-tuning existing layer outputs.
+
+Use `Chat with` to choose the layer you want to talk to. The chat will update that layer and every layer after it. Earlier layers are not rerun.
+
+Modes:
+
+```text
+Replace outputs
+Append outputs
+```
+
+`Replace outputs` rewrites the selected layer's output.
+
+`Append outputs` adds the new response to the existing output.
+
+Chat uses the current outputs and chat history as memory, so it should build on existing progress instead of starting over.
 
 ## Providers
 
@@ -75,32 +149,53 @@ Gemini
 OpenAI-compatible
 Anthropic
 Ollama
-Local GGUF
+Hugging Face
 ```
 
 ### Gemini
 
-Use a Gemini API key. Click `Settings > API key > Enter API key...`, then `Models > Load from provider`.
+Use a Gemini API key.
+
+Typical setup:
+
+```text
+Provider: Gemini
+Settings > API key > Enter API key...
+Models > Load from provider
+```
 
 ### Anthropic
 
-Use an Anthropic API key. Click `Settings > API key > Enter API key...`, then `Models > Load from provider`.
+Use an Anthropic API key.
+
+Typical setup:
+
+```text
+Provider: Anthropic
+Settings > API key > Enter API key...
+Models > Load from provider
+```
 
 ### OpenAI-Compatible
 
-Use this for OpenAI, LM Studio, local OpenAI-style servers, or any service with `/v1/models` and `/v1/chat/completions`.
-
-Set the endpoint with:
+Use this for OpenAI-style APIs, local model servers, LM Studio, or any service that exposes:
 
 ```text
-Settings > Endpoint / runtime...
+/v1/models
+/v1/chat/completions
 ```
 
-Common examples:
+Common endpoints:
 
 ```text
 https://api.openai.com/v1
 http://localhost:1234/v1
+```
+
+Set the endpoint with:
+
+```text
+Settings > Endpoint...
 ```
 
 ### Ollama
@@ -113,95 +208,173 @@ Default endpoint:
 http://localhost:11434
 ```
 
-Example setup outside LayerGen:
+Example outside LayerGen:
 
 ```cmd
 ollama pull deepseek-r1:7b
 ```
 
-Then in LayerGen:
+Then inside LayerGen:
 
 ```text
 Provider: Ollama
 Models > Load from provider
 ```
 
-No API key is needed for local Ollama.
+Ollama does not need an API key.
 
-### Local GGUF
+### Hugging Face
 
-Use this for local GGUF models through `llama-cli.exe`.
+Use this for Hugging Face Inference Providers.
 
-Steps:
-
-1. Set provider to `Local GGUF`.
-2. Click `Settings > Choose local runtime...`.
-3. Select `llama-cli.exe` from the extracted llama.cpp folder.
-4. Add a model using one of:
-   - `Models > Import local model file...`
-   - `Models > Import local model folder...`
-   - `Models > Import Hugging Face repo...`
-
-Important: do not copy only `llama-cli.exe` by itself. The Windows llama.cpp build usually needs nearby DLL files. Select the `llama-cli.exe` inside the extracted llama.cpp folder.
-
-## Hugging Face GGUF Repos
-
-For Hugging Face repo IDs, use `Local GGUF` and a recent `llama-cli.exe`.
-
-Example repo IDs:
+To search for eligible models:
 
 ```text
-ggml-org/gemma-3-1b-it-GGUF
-unsloth/DeepSeek-R1-Distill-Qwen-7B-GGUF:Q4_K_M
+Provider: Hugging Face
+Models > Search Hugging Face models...
 ```
 
-In LayerGen:
+The search window has three types:
 
 ```text
-Models > Import Hugging Face repo...
+Chat / code / text
+Vision / image input
+Any compatible
 ```
 
-Then paste the repo ID.
-
-LayerGen passes the repo to `llama-cli` using the Hugging Face route. The first run may take a long time because the model may need to download before generation starts.
-
-Manual test:
-
-```cmd
-"C:\path\to\llama-cli.exe" -hf ggml-org/gemma-3-1b-it-GGUF -p "hello" -n 20 --simple-io
-```
-
-If that works in Command Prompt, it should work in LayerGen.
-
-## Chat Fine-Tuning
-
-The `Chat` tab lets you talk to one layer and update that layer plus everything after it.
-
-Use the `Chat with` dropdown to choose the starting layer.
-
-Modes:
+You can search for names like:
 
 ```text
-Replace outputs
-Append outputs
+qwen
+gemma
+deepseek
+coder
+vision
 ```
 
-`Replace outputs` rewrites the selected layer's output.
+The search list is filtered toward models Hugging Face reports as served by at least one Inference Provider.
 
-`Append outputs` adds new material to the existing output instead of replacing it.
+To run a Hugging Face layer, add a Hugging Face token:
 
-Chat uses the current layer outputs and chat history as memory. It does not rerun earlier layers.
+```text
+Settings > API key > Enter API key...
+```
+
+The search can often load public catalog results without a token, but running the model usually requires one.
+
+## API Keys
+
+Each layer can use either:
+
+```text
+Shared provider key
+Layer-specific key
+```
+
+Use a shared key when several layers use the same provider.
+
+Use a layer-specific key when one layer should use a different account, provider route, or token.
+
+API keys are not saved into session files unless you enable:
+
+```text
+Save keys
+```
+
+For safety, leave `Save keys` off unless you really want the session file to contain your keys.
+
+## Model Menus
+
+Use `Models` inside a layer.
+
+Options include:
+
+```text
+Load from provider
+Search Hugging Face models...
+Import model list from file...
+Enter model name...
+Clear model list
+```
+
+For Hugging Face, the recommended path is:
+
+```text
+Models > Search Hugging Face models...
+```
+
+For Gemini, Anthropic, OpenAI-compatible servers, and Ollama, use:
+
+```text
+Models > Load from provider
+```
+
+## Attachments
+
+Project input, layer prompts, and chat messages can include attachments.
+
+Buttons:
+
+```text
+Add file
+Add URL
+Clear files
+```
+
+Text and code files are added as readable context.
+
+Images are sent as image input when the selected provider/model supports image input.
+
+PDFs are sent directly to Gemini and Anthropic when supported. Other providers still receive the filename and any readable text LayerGen can include.
+
+Large local files are not copied into the session file. LayerGen saves their file paths, so keep attached files in place if you want a saved session to keep using them.
+
+## Output Display
+
+Layer outputs and chat transcripts render common model formatting more cleanly.
+
+LayerGen styles:
+
+```text
+# headings
+**bold**
+*italic*
+`inline code`
+fenced code blocks
+[links](https://example.com)
+> quotes
+- lists
+~~strikethrough~~
+$math$
+```
+
+The display is only visual. Copying or saving still uses the underlying text the model produced.
+
+## Saving Code
+
+Each layer output has:
+
+```text
+Copy
+Save
+Clear
+```
+
+Use `Save` when you want to write the generated output to a file.
+
+LayerGen chooses a suggested file extension from the layer's language setting.
 
 ## Flowchart
 
 Open the `Flowchart` tab to see how layers feed into each other.
 
-The flowchart updates based on:
+The diagram updates based on variables such as:
 
 ```text
 {previous_output}
 {all_previous_outputs}
-{layer_N_output}
+{layer_1_output}
+{layer_2_output}
 ```
 
 Click `Refresh` if you want to force an update.
@@ -224,111 +397,165 @@ Ctrl+S
 Ctrl+Shift+S
 ```
 
-LayerGen saves layer prompts, settings, outputs, chat history, and the global input.
+LayerGen saves:
 
-API keys are not saved unless `Save keys` or `File > Save keys in session` is enabled.
+- Project input
+- Project attachments
+- Layers
+- Prompts
+- Model choices
+- Settings
+- Outputs
+- Chat history
+- Flow state
 
-## Output
-
-Each layer has:
-
-```text
-Copy output
-Save output
-Clear output
-```
-
-Use `Save output` when you want to save the generated code directly to a file.
+API keys are saved only if `Save keys` is enabled.
 
 ## Temperature
 
-Temperature controls randomness.
+Temperature controls how random or creative a model is.
 
-Lower values make responses more predictable:
+Good coding range:
 
 ```text
-0.0 to 0.3
+0.2 to 0.7
 ```
 
-Middle values are usually good for coding:
+Lower temperature:
 
 ```text
-0.3 to 0.7
+More predictable
+More consistent
+Less creative
 ```
 
-Higher values are more creative but can be less reliable:
+Higher temperature:
 
 ```text
-0.8 to 2.0
+More varied
+More creative
+More likely to make mistakes
 ```
 
 ## Troubleshooting
 
-### The model is taking forever
+### The app will not run
 
-For Hugging Face or local GGUF models, the first run may download or load the model. LayerGen shows status updates every minute and warns after about 10 minutes.
+Try running it from Command Prompt:
+
+```cmd
+cd C:\Users\haoqi\Documents\Codex\2026-08-03\thi\outputs
+python LayerGen.py
+```
+
+If `python` does not work, try:
+
+```cmd
+py LayerGen.py
+```
+
+### The model dropdown is empty
 
 Try:
+
+```text
+Models > Load from provider
+```
+
+For Hugging Face, try:
+
+```text
+Models > Search Hugging Face models...
+```
+
+If the provider needs an API key, add it first.
+
+### Hugging Face says a model is not supported
+
+Use the Hugging Face search menu and pick from the eligible results instead of typing a model manually.
+
+For image input, use:
+
+```text
+Vision / image input
+```
+
+For Qwen coding models, search:
+
+```text
+qwen coder
+```
+
+For Gemma models, search:
+
+```text
+gemma
+```
+
+### Hugging Face returns HTTP 401
+
+The token is missing, invalid, or does not have the right permission.
+
+Add a Hugging Face token here:
+
+```text
+Settings > API key > Enter API key...
+```
+
+### Hugging Face returns HTTP 403
+
+Your token or account may not be allowed to use the selected provider route.
+
+Check that:
+
+- Your token has Inference Providers permission.
+- Your Hugging Face account can use the selected provider.
+- Billing or credits are available if the provider requires them.
+
+### A model takes too long
+
+Try a short test:
 
 ```text
 Max tokens: 20
 Prompt: hello
 ```
 
-If it still hangs, run the same `llama-cli` command in Command Prompt to see the runtime's own messages.
+If that works, increase max tokens again.
 
-### Local model failed: no output returned
+Large models can take much longer than small models.
 
-Most likely causes:
+### Chat reruns too much
 
-```text
-llama-cli.exe was copied without its DLL files
-the wrong executable was selected
-the Hugging Face repo is not a GGUF repo
-the model is too large for your machine
-```
+Use the `Chat with` dropdown in the Chat tab.
 
-Fix:
+The dropdown controls which layer is fine-tuned. Chat should update that layer and all layers after it, but it should not rerun earlier layers.
 
-```text
-Choose llama-cli.exe inside the extracted llama.cpp folder.
-Use a small GGUF model first.
-Set max tokens to 20 for testing.
-```
+### Saved sessions do not include attached files
 
-### The Hugging Face repo does not work
+LayerGen saves local attachment paths, not full file contents.
 
-Make sure the repo is GGUF-compatible. GGUF repos often end with:
+Keep attached files in the same location if you want old sessions to keep finding them.
 
-```text
--GGUF
-```
+## Project Files
 
-Also try adding a quant:
-
-```text
-author/model:Q4_K_M
-```
-
-### The dropdown has no models
-
-Use one of:
-
-```text
-Models > Load from provider
-Models > Enter model name...
-Models > Import model list from file...
-Models > Import local model file...
-Models > Import Hugging Face repo...
-```
-
-For `Local GGUF`, `Load from provider` is not used. Import a local file/folder or Hugging Face repo instead.
-
-## Main Files
+Main app:
 
 ```text
 LayerGen.py
+```
+
+README:
+
+```text
 README_LayerGen.md
 ```
 
-The other Python files in the folder are synced copies kept for compatibility with earlier names.
+Synced compatibility copies:
+
+```text
+code_generator_app.py
+three_layer_code_generator_gui.py
+```
+
+Backups may also appear in the folder. They are kept so you can return to older versions if a large change does not work the way you wanted.

@@ -6,6 +6,8 @@ Instead of using one large prompt, you create separate layers. Each layer can ha
 
 LayerGen was originally designed for code generation, but it can be used for any workflow where one AI step should feed another.
 
+This README was made for the latest version of LayerGen, version 0.0.4.
+
 ## Quick Start
 
 Open Command Prompt and run:

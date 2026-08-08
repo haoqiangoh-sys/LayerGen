@@ -6,7 +6,7 @@ Instead of using one large prompt, you create separate layers. Each layer can ha
 
 LayerGen was originally designed for code generation, but it can be used for any workflow where one AI step should feed another.
 
-This README was made for the latest version of LayerGen, version 0.0.4.
+This README was made for the latest version of LayerGen, version 0.0.5. In the newest update the major change added was the ability to download and run local models, which can be accessed via the Models setting.
 
 ## Quick Start
 
